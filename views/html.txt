@@ -1,0 +1,154 @@
+// Grammar:
+// "tbase" (key ":" valuetype)+
+// "t" elemtype "<" (key ":" valuetype)+
+// "e" enumvaluetype "<" (value)+
+// valuetype can be an enum name
+// valuetype can be attr "." (tag)?
+
+e s < ""
+e url < ""
+e css < ""
+e b < true false
+e int < 0
+e float < 0
+e elemtype < html link meta style title body address article aside footer header h1 h2 h3 h4 h5 h6 hgroup nav section blockquote dd div dl dt figcaption figure hr li main ol p pre ul a abbr b bdi bdo br cite code data dfn em i kbd mark q rb rp rt rtc ruby s samp small span strong sub sup time u var wbr area audio img map track video embed iframe object param picture source canvas noscript script del ins caption col colgroup table tbody td tfoot th thead tr button datalist fieldset form input label legend meter optgroup option output progress select textarea details dialog menu menuitem summary slot template
+
+e autocapitalize < none sentences words characters
+e dir < ltr rtl auto
+e crossorigin < anonymous use-credentials
+e referrerpolicy < no-referrer no-referrer-when-downgrade origin origin-when-cross-origin unsafe-url
+
+e linktype < alternate author help license next prefetch prev search sidebar
+e linklinktype < alternate author help license next prefetch prev search sidebar canonical dns-prefetch icon manifest modulepreload pingback preconnect preload prerender shortlink stylesheet
+e aarealinktype < alternate author help license next prefetch prev search sidebar bookmark external nofollow noopener noreferrer tag
+
+e atarget < _self _blank _parent _top
+e shape < rect circle poly default
+e preload < none metadata auto
+e imgdecoding < sync async auto
+e trackkind < subtitles captions descriptions chapters metadata
+e thscope < row col rowgroup colgroup auto
+e method < post get
+e buttontype < submit reset button
+e onoff < on off
+e autocomplete < off on name honorific-prefix given-name additional-name family-name honorific-suffix nickname email username new-password current-password organization-title organization street-address address-line1 address-line2 address-line3 address-level4 address-level3 address-level2 address-level1 country country-name postal-code cc-name cc-given-name cc-additional-name cc-family-name cc-number cc-exp cc-exp-month cc-exp-year cc-csc cc-type transaction-currency transaction-amount language bday bday-day bday-month bday-year sex tel tel-country-code tel-national tel-area-code tel-local tel-extension email impp url photo
+e inputtype < button checkbox color date datetime-local email file hidden image month number password radio range reset search submit tel text time url week
+e inputmode < none text decimal numeric tel search email url
+e textwrap < hard soft off
+e menutype < toolbar
+
+tbase accesskey:s autocapitalize:autocapitalize class:s contenteditable:b contextmenu:id.menu data:s dir:dir draggable:b hidden:b id:s is:elemtype lang:s spellcheck:b style:css tabindex:int title:s onabort:s onautocomplete:s onautocompleteerror:s onblur:s oncancel:s oncanplay:s oncanplaythrough:s onchange:s onclick:s onclose:s oncontextmenu:s oncuechange:s ondblclick:s ondrag:s ondragend:s ondragenter:s ondragexit:s ondragleave:s ondragover:s ondragstart:s ondrop:s ondurationchange:s onemptied:s onended:s onerror:s onfocus:s oninput:s oninvalid:s onkeydown:s onkeypress:s onkeyup:s onload:s onloadeddata:s onloadedmetadata:s onloadstart:s onmousedown:s onmouseenter:s onmouseleave:s onmousemove:s onmouseout:s onmouseover:s onmouseup:s onmousewheel:s onpause:s onplay:s onplaying:s onprogress:s onratechange:s onreset:s onresize:s onscroll:s onseeked:s onseeking:s onselect:s onshow:s onsort:s onstalled:s onsubmit:s onsuspend:s ontimeupdate:s ontoggle:s onvolumechange:s onwaiting:s
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+t html < xmlns:s
+t link < as:s crossorigin:crossorigin href:url hreflang:s integrity:s media:s referrerpolicy:referrerpolicy rel:linklinktype sizes:s type:s
+t meta < charset:s content:s http-equiv:s name:s
+t style < type:s media:s nonce:s
+t title <
+t body < onafterprint:s onbeforeprint:s onbeforeunload:s onblur:s onerror:s onfocus:s onhashchange:s onload:s onmessage:s onoffline:s ononline:s onpopstate:s onredo:s onresize:s onstorage:s onundo:s onunload:s
+t address <
+t article <
+t aside <
+t footer <
+t header <
+t h1 <
+t h2 <
+t h3 <
+t h4 <
+t h5 <
+t h6 <
+t hgroup <
+t nav <
+t section <
+t blockquote < cite:url
+t dd <
+t div <
+t dl <
+t dt <
+t figcaption <
+t figure <
+t hr <
+t li < value:int
+t main <
+t ol < reversed:b start:int
+t p < 
+t pre <
+t ul <
+t a < download:s href:url hreflang:s ping:s referrerpolicy:referrerpolicy rel:aarealinktype target:atarget type:s
+t abbr <
+t b <
+t bdi <
+t bdo <
+t br <
+t cite <
+t code <
+t data < value:s
+t dfn <
+t em <
+t i <
+t kbd <
+t mark <
+t q < cite:url
+t rb <
+t rp <
+t rt <
+t rtc <
+t ruby <
+t s <
+t samp <
+t small <
+t span <
+t strong <
+t sub <
+t sup <
+t time < datetime:s
+t u <
+t var <
+t wbr <
+t area < alt:s coords:s download:s href:url hreflang:s media:s referrerpolicy:referrerpolicy rel:aarealinktype shape:shape target:atarget
+t audio < autoplay:b buffered:s controls:b crossorigin:crossorigin loop:b muted:b preload:preload src:url
+t img < alt:s crossorigin:crossorigin decoding:imgdecoding height:int ismap:b referrerpolicy:referrerpolicy sizes:s src:url srcset:url width:int usemap:s
+t map < name:s
+t track < default:b kind:trackkind label:s src:url srclang:s
+t video < autoplay:b buffered:s controls:b crossorigin:crossorigin height:int loop:b muted:b preload:preload poster:url src:url width:int playsinline:b
+t embed < height:int src:url type:s width:int
+t iframe < allowfullscreen:b allowpaymentrequest:b height:int name:s referrerpolicy:referrerpolicy sandbox:s src:url srcdoc:s width:int
+t object < data:s height:int name:s type:s usemap:s width:int
+t param < name:s value:s
+t picture <
+t source < sizes:s src:url srcset:url type:s media:s
+t canvas < height:int width:int
+t noscript <
+t script < asnyc:b crossorigin:crossorigin defer:b integrity:s nomodule:b nonce:s src:url text:s type:s
+t del < cite:url datetime:s
+t ins < cite:url datetime:s
+t caption <
+t col < span:int
+t colgroup < span:int
+t table <
+t tbody <
+t td < colspan:int headers:s rowspan:int 
+t tfoot <
+t th < abbr:s colspan:int headers:s rowspan:int scope:thscope
+t thead <
+t tr <
+t button < autofocus:b disabled:b form:id.form formaction:url formenctype:s formmethod:method formnovalidate:b formtarget:atarget name:s type:buttontype value:s
+t datalist <
+t fieldset < disabled:b form:id.form name:s
+t form < accept-charset:s action:url autocomplete:onoff enctype:s method:method name:s novalidate:b target:atarget
+t input < type:inputtype accept:s autocomplete:autocomplete autofocus:b capture:b checked:b disabled:b form:id.form formaction:s formenctype:s formmethod:method formnovalidate:b formtarget:atarget height:int inputmode:inputmode list:id.datalist max:s maxlength:int min:s minlength:int multiple:b name:s pattern:s placeholder:s readonly:b required:b size:s spellcheck:b src:url step:float value:s width:int
+t label < for:id. form:id.form
+t legend <
+t meter < value:float min:float max:float low:float high:float optimum:float form:id.form
+t optgroup < disabled:b label:s
+t option < disabled:b label:s selected:b value:s
+t output < for:id. form:id.form name:s
+t progress < max:float value:float
+t select < autocomplete:autocomplete autofocus:b disabled:b form:id.form multiple:b name:s required:b size:int
+t textarea < autocomplete:onoff autofocus:b cols:int disabled:b form:id.form maxlength:int minlength:int name:s placeholder:s readonly:b required:b rows:int spellcheck:b wrap:textwrap
+t details < open:b
+t dialog < open:b
+t menu < type:menutype
+t menuitem < checked:b command:s default:b disabled:b icon:url label:s radiogroup:s type:s
+t summary <
+t slot < name:s
+t template <
