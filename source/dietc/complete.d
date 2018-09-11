@@ -205,13 +205,58 @@ class AttributeNameComplete : CompletionSource
 		{
 			foreach (info; tagInfos)
 			{
-				if (info.tag == tag.name)
+				if (sicmp(info.tag, tag.name) == 0)
 				{
 					const(Completion)[] completion;
 					foreach (attr; info.attributes)
-						if (attr.name.startsWith(identifier))
+						if (attr.name.startsWith(identifier.asLowerCase))
 							completion ~= Completion(CompletionType.attribute, attr.name);
 					return completion;
+				}
+			}
+		}
+		return null;
+	}
+}
+
+class AttributeValueComplete : CompletionSource
+{
+	const TagInfo[] tagInfos;
+
+	this(in TagInfo[] tagInfos)
+	{
+		this.tagInfos = tagInfos;
+	}
+
+	const(Completion)[] complete(string identifier, AST[] context, DietComplete engine, size_t offset) const
+	{
+		TagNode tag;
+		TagNode.AttributeAST attribute;
+		foreach_reverse (node; context)
+		{
+			if (cast(TagNode.AttributeAST) node)
+				attribute = cast(TagNode.AttributeAST) node;
+
+			if (cast(TagNode) node)
+			{
+				tag = cast(TagNode) node;
+				break;
+			}
+		}
+
+		identifier = identifier.reduceToLastIdentifier;
+
+		if (tag)
+		{
+			foreach (info; tagInfos)
+			{
+				if (sicmp(info.tag, tag.name) == 0)
+				{
+					Completion[] completion;
+					foreach (attr; info.attributes)
+						if (sicmp(attr.name, attribute.name) == 0)
+							completion ~= (cast()attr.completion).complete(identifier, context, engine, offset);
+					return cast(const(Completion)[]) completion.sort!"a.text < b.text".uniq!"a.text == b.text".array;
 				}
 			}
 		}
@@ -226,6 +271,7 @@ class DietComplete
 	EnumComplete tags;
 	EnumComplete doctypes;
 	AttributeNameComplete attributeNames;
+	AttributeValueComplete attributeValues;
 
 	this(string file)
 	{
@@ -238,6 +284,7 @@ class DietComplete
 		tags = new EnumComplete(tagCompletions);
 		doctypes = new EnumComplete(doctypeCompletions);
 		attributeNames = new AttributeNameComplete(tagInfos);
+		attributeValues = new AttributeValueComplete(tagInfos);
 
 		this.provider = provider;
 		root.reset();
@@ -273,6 +320,7 @@ class DietComplete
 		if (cast(Document) contentLess[0])
 			while (cast(TextLine) contentLess[$ - 1] || cast(TextLine.PartAST) contentLess[$ - 1])
 				contentLess.length--;
+		assert(contentLess.length >= 1);
 
 		if (cast(DStatement) tree[$ - 1] || cast(Assignment) tree[$ - 1] || cast(RawAssignment) tree[$ - 1])
 		{
@@ -288,6 +336,16 @@ class DietComplete
 			auto code = expr.content;
 			if (!code.all!isNumber && !code.isPlainString)
 				return Completion.completeD;
+		}
+
+		if (tree.length >= 2)
+		{
+			if (auto expr = cast(Expression) tree[$ - 1])
+				if (auto attr = cast(TagNode.AttributeAST) tree[$ - 2])
+				{
+					string exprCode = parser.input.read([expr.token.range[0], offset]);
+					return attributeValues.complete(exprCode, tree, this, offset);
+				}
 		}
 
 		if (tree.length >= 3)
@@ -411,6 +469,17 @@ bool isPlainString(string code)
 		return false;
 	// TODO: better string check
 	return true;
+}
+
+string reduceToLastIdentifier(string identifier)
+{
+	foreach_reverse (i, c; identifier)
+	{
+		if (c.isNumber || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '-')
+			continue;
+		return identifier[i + 1 .. $];
+	}
+	return identifier;
 }
 
 unittest

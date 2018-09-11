@@ -251,7 +251,7 @@ class TagNode : NestedTags, INamed
 	}
 
 	/// Wrapper class around Attribute used for visiting
-	class AttributeAST : AST
+	class AttributeAST : AST, INamed
 	{
 		Attribute attribute;
 
@@ -262,7 +262,15 @@ class TagNode : NestedTags, INamed
 
 		Token token() @property
 		{
-			return attribute.name;
+			auto tok = attribute.name;
+			if (attribute.expr)
+				tok.range[1] = attribute.expr.token.range[1];
+			return tok;
+		}
+
+		string name() @property
+		{
+			return attribute.name.content;
 		}
 
 		void accept(ASTVisitor visitor)

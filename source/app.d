@@ -49,7 +49,7 @@ html(lang="de")
 		writeln();
 	}
 
-	testComplete(98);
+	testComplete(24);
 
 	string code;
 	size_t offset;
