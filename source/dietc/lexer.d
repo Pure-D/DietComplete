@@ -127,6 +127,17 @@ struct DietInput
 	Token[] backlog;
 	bool lastWasNewline = true;
 
+	size_t indexEOL() @property const
+	{
+		string pre = read([0, index]);
+		if (pre.endsWith("\r\n"))
+			return index - 2;
+		else if (pre.endsWith("\r", "\n"))
+			return index - 1;
+		else
+			return index;
+	}
+
 	static DietInput fromFile(R)(R file)
 	{
 		import std.file : readText;
@@ -165,7 +176,7 @@ struct DietInput
 		return indentation;
 	}
 
-	string read(size_t[2] range)
+	string read(size_t[2] range) const
 	{
 		if (range[1] < range[0])
 			return null;

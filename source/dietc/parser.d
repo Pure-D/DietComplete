@@ -1351,7 +1351,7 @@ struct ASTParser
 				ret._contents = parseTagContents();
 			}
 
-			ret._token.range[1] = input.index;
+			ret._token.range[1] = input.indexEOL;
 			return ret;
 		}
 		else
@@ -1378,7 +1378,7 @@ struct ASTParser
 					input.expect(TokenType.detent);
 				}
 			}
-			front.range[1] = input.index;
+			front.range[1] = input.indexEOL;
 			return new StringTagContents(front, content);
 		}
 		return null;
