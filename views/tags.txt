@@ -1,9 +1,7 @@
-html
 link
 meta
 style
 title
-body
 address
 article
 aside

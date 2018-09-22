@@ -45,6 +45,7 @@ t meta < charset:s content:s http-equiv:s name:s
 t style < type:s media:s nonce:s
 t title <
 t body < onafterprint:s onbeforeprint:s onbeforeunload:s onblur:s onerror:s onfocus:s onhashchange:s onload:s onmessage:s onoffline:s ononline:s onpopstate:s onredo:s onresize:s onstorage:s onundo:s onunload:s
+t head <
 t address <
 t article <
 t aside <
