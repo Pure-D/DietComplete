@@ -364,7 +364,31 @@ class DietComplete
 		if (auto tag = cast(TagNode) contentLess[$ - 1])
 		{
 			if (offset.withinRange(tag.tag.range))
-				return tags.complete(parser.input.read([tag.tag.range[0], offset]), contentLess, this, offset);
+			{
+				string written = parser.input.read([tag.tag.range[0], offset]);
+				auto ret = tags.complete(written, contentLess, this, offset);
+				if (contentLess.length == 2) // top level element
+				{
+					if ("doctype".startsWith(written.asLowerCase))
+						ret ~= Completion(CompletionType.meta, "doctype").preselect;
+					if ("html".startsWith(written.asLowerCase))
+						ret ~= Completion(CompletionType.tag, "html").preselect;
+				}
+				else if (contentLess.length > 2)
+				{
+					if (auto parent = cast(TagNode) contentLess[$ - 2])
+					{
+						if (parent.name == "html")
+						{
+							if ("head".startsWith(written.asLowerCase))
+								ret ~= Completion(CompletionType.tag, "head").preselect;
+							if ("body".startsWith(written.asLowerCase))
+								ret ~= Completion(CompletionType.tag, "body").preselect;
+						}
+					}
+				}
+				return ret;
+			}
 			else if (offset.withinRange(tag.attributesRange)) // somewhere random in attributes but not in name or value
 				return attributeNames.complete("", contentLess, this, offset);
 		}
