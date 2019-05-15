@@ -1,5 +1,7 @@
 # DietComplete
 
+Join the chat: [![Join on Discord](https://discordapp.com/api/guilds/242094594181955585/widget.png?style=shield)](https://discord.gg/Bstj9bx)
+
 An error correcting diet parser based on the diet-ng spec. See [SPEC.md](SPEC.md) for the added grammar by this repository.
 
 ## Example
