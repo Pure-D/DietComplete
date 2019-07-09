@@ -420,13 +420,14 @@ class DietComplete
 	}
 }
 
-void extractD(DietComplete complete, size_t offset, out string code, out size_t codeOffset)
+void extractD(DietComplete complete, size_t offset, out string code, out size_t codeOffset, string prefix = null)
 {
-	return complete.parser.root.extractD(offset, code, codeOffset);
+	return complete.parser.root.extractD(offset, code, codeOffset, prefix);
 }
 
-void extractD(AST root, size_t offset, out string code, out size_t codeOffset)
+void extractD(AST root, size_t offset, out string code, out size_t codeOffset, string prefix = null)
 {
+	code = prefix;
 	codeOffset = size_t.max;
 	class CodeVisitorImpl : ASTVisitor
 	{

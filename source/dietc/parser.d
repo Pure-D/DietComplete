@@ -757,17 +757,16 @@ struct ASTParser
 	Comment parseComment()
 	{
 		auto tok = input.front;
-		if (input.matchText("//-"))
+		if (input.matchText("//"))
 		{
+			bool hidden = input.front.content.startsWith("-");
 			string content = parseText(true, true);
+			if (hidden)
+				content = content[1 .. $];
+			tok.type = TokenType.raw;
+			tok.content = hidden ? "//-" : "//";
 			tok.range[1] = input.front.range[0];
-			return new HiddenComment(tok, content);
-		}
-		else if (input.matchText("//"))
-		{
-			string content = parseText(true, true);
-			tok.range[1] = input.front.range[0];
-			return new Comment(tok, content);
+			return hidden ? new HiddenComment(tok, content) : new Comment(tok, content);
 		}
 		return null;
 	}
@@ -775,9 +774,12 @@ struct ASTParser
 	DStatement parseDStatement()
 	{
 		auto tok = input.front;
-		if (input.matchText("-"))
+		if (tok.content.startsWith("-"))
 		{
 			string content = parseText(false, false);
+			content = content[1 .. $];
+			tok.content = "-";
+			tok.type = TokenType.raw;
 			tok.range[1] = input.front.range[0];
 			return new DStatement(tok, content);
 		}
@@ -1536,8 +1538,10 @@ unittest
 	bar1.tag.assertToken(TokenType.identifier, "div", [5, 5]);
 	bar2.tag.assertToken(TokenType.identifier, "div", [18, 18]);
 
-	assert(cast(TextLine) bar1.contents, "Expected string contents but got " ~ bar1.contents.to!string);
-	assert(cast(TextLine) bar2.contents, "Expected string contents but got " ~ bar2.contents.to!string);
+	assert(cast(TextLine) bar1.contents,
+			"Expected string contents but got " ~ bar1.contents.to!string);
+	assert(cast(TextLine) bar2.contents,
+			"Expected string contents but got " ~ bar2.contents.to!string);
 
 	assert((cast(TextLine) bar1.contents)._parts.length == 1);
 	assert((cast(TextLine) bar2.contents)._parts.length == 1);
@@ -1584,4 +1588,44 @@ unittest
 	assert(content._parts[0].inlineExpr.token.content == "item.foo");
 	assert(content._parts[0].inlineExpr.content == "item.foo");
 	assert(content._parts[1].raw == " bar");
+}
+
+unittest
+{
+	DietInput input;
+	input.file = "stdin";
+	input.code = `//-foo`;
+
+	auto parser = new ASTParser;
+	parser.input = input.save;
+	parser.parseDocument();
+
+	assert(parser.input.errors.length == 0);
+
+	assert(parser.root);
+	assert(parser.root.children.length == 1);
+	auto root = cast(HiddenComment) parser.root.children[0];
+	assert(root);
+	assertToken(root.token, TokenType.raw, "//-");
+	assert(root.content == "foo");
+}
+
+unittest
+{
+	DietInput input;
+	input.file = "stdin";
+	input.code = `-foo`;
+
+	auto parser = new ASTParser;
+	parser.input = input.save;
+	parser.parseDocument();
+
+	assert(parser.input.errors.length == 0);
+
+	assert(parser.root);
+	assert(parser.root.children.length == 1);
+	auto root = cast(DStatement) parser.root.children[0];
+	assert(root);
+	assertToken(root.token, TokenType.raw, "-");
+	assert(root.content == "foo");
 }
