@@ -224,8 +224,8 @@ struct DietInput
 		Token tok = front;
 		auto ret = this.match(type, match);
 		if (!ret)
-			errors.expect(this, at, (match.length ? "'" ~ match ~ "'"
-					: type.to!string) ~ ", but got " ~ tok.to!string, srcfile, srcline);
+			errors.expect(this, at, (match.length
+					? "'" ~ match ~ "'" : type.to!string) ~ ", but got " ~ tok.to!string, srcfile, srcline);
 		return ret;
 	}
 
@@ -400,7 +400,9 @@ struct DietInput
 				return ret;
 			}
 			else
-				return [Token(TokenType.whitespace, code[start .. index], [start, index])];
+				return [
+					Token(TokenType.whitespace, code[start .. index], [start, index])
+				];
 		}
 		else if (c.tagIdentifierValidator)
 		{
@@ -488,4 +490,27 @@ string indent(string s, string indentation = "\t")
 	return s.lineSplitter!(KeepTerminator.yes)
 		.map!(a => a.strip.length ? indentation ~ a : a)
 		.join("");
+}
+
+unittest
+{
+	import std.array : array;
+
+	DietInput input;
+	input.file = "stdin";
+	input.code = q{doctype html
+html
+
+};
+
+	auto tokens = input.array;
+	assert(input.errors.length == 0);
+
+	with (TokenType)
+		assert(tokens == [
+				Token(identifier, "doctype", [0, 7]), Token(whitespace, " ", [7, 8]),
+				Token(identifier, "html", [8, 12]), Token(newline, "\n", [12, 13]),
+				Token(identifier, "html", [13, 17]), Token(newline, "\n", [17, 18]),
+				Token(newline, "\n", [18, 19])
+				]);
 }

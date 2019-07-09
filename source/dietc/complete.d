@@ -446,9 +446,16 @@ void extractD(AST root, size_t offset, out string code, out size_t codeOffset)
 		static foreach (T; AliasSeq!(Expression, Assignment, RawAssignment))
 			override void visit(T expr) in (expr !is null)
 			{
+				static if (is(T == Expression))
+					enum typeOffset = 0;
+				else static if (is(T == Assignment))
+					enum typeOffset = 1; // offset the equal of tag=
+				else static if (is(T == RawAssignment))
+					enum typeOffset = 2; // offset the bang-equal of tag!=
+
 				code ~= "__diet_value(";
 				if (offset.withinRange(expr.token.range))
-					codeOffset = code.length + (offset - expr.token.range[0] - expr.token.content.length);
+					codeOffset = code.length + (offset - typeOffset - expr.token.range[0]);
 				code ~= expr.content;
 				code ~= ");";
 			}
@@ -525,4 +532,73 @@ unittest
 	assert(testComplete("t", 1).canFind!(a => a.text == "textarea"));
 	assert(testComplete("", 0).canFind!(a => a.text == "textarea"));
 	assert(testComplete("div\n\t", 5).canFind!(a => a.text == "textarea"));
+}
+
+unittest
+{
+	import std.conv;
+
+	DietInput input;
+	input.file = "stdin";
+	input.code = `foo
+	- int item = 3;
+	p #{item.foobar} bar
+	a(attr=foo.bar)= foo.bar
+`;
+	auto c = new DietComplete(input, cast(FileProvider)(name) {
+		assert(false, "Can't import " ~ name ~ " in test");
+	});
+
+	assert(c.completeAt(23).canFind!(a => a.text == "pre"));
+	assert(c.completeAt(39).length == 0);
+	assert(c.completeAt(38).length == 0);
+	assert(c.completeAt(24).length == 0);
+	assert(c.completeAt(25).length == 0);
+
+	void checkDBounds(size_t start, size_t end)
+	{
+		assert(c.completeAt(start - 1) !is Completion.completeD);
+		assert(c.completeAt(start) is Completion.completeD);
+		assert(c.completeAt(end) is Completion.completeD);
+		assert(c.completeAt(end + 1) !is Completion.completeD);
+	}
+
+	checkDBounds(6, 20);
+	checkDBounds(26, 37);
+	checkDBounds(51, 58);
+	checkDBounds(60, 68);
+
+	string code;
+	size_t offset;
+
+	c.extractD(28, code, offset);
+	assert(code == `void __diet_document() {{ int item = 3;{__diet_value(item.foobar);}{{__diet_value(foo.bar);}__diet_value( foo.bar);}}}`);
+	assert(offset == 55);
+
+	c.extractD(37, code, offset);
+	assert(offset == 64);
+
+	c.extractD(38, code, offset);
+	assert(offset == size_t.max);
+
+	c.extractD(25, code, offset);
+	assert(offset == size_t.max);
+
+	c.extractD(7, code, offset);
+	assert(offset == 26);
+
+	c.extractD(20, code, offset);
+	assert(offset == 39);
+
+	c.extractD(51, code, offset);
+	assert(offset == 82);
+
+	c.extractD(58, code, offset);
+	assert(offset == 89);
+
+	c.extractD(61, code, offset);
+	assert(offset == 106);
+
+	c.extractD(68, code, offset);
+	assert(offset == 113);
 }

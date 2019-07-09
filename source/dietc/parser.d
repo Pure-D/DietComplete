@@ -3,11 +3,13 @@ module dietc.parser;
 import dietc.lexer;
 
 import std.algorithm;
-import std.conv : to, text;
+import std.array : join;
+import std.conv : text, to;
 import std.meta : AliasSeq;
 
-alias ASTClasses = AliasSeq!(Document, HiddenComment, Comment, DStatement, DietFilter, TagNode, TagNode.AttributeAST,
-		RawAssignment, Assignment, StringTagContents, TextLine, XMLNode, PipeText, Expression, TextLine.PartAST);
+alias ASTClasses = AliasSeq!(Document, HiddenComment, Comment, DStatement,
+		DietFilter, TagNode, TagNode.AttributeAST, RawAssignment,
+		Assignment, StringTagContents, TextLine, XMLNode, PipeText, Expression, TextLine.PartAST);
 
 interface AST
 {
@@ -18,12 +20,14 @@ interface AST
 abstract class ASTVisitor
 {
 	static foreach (T; ASTClasses)
-		void visit(T ast) in (ast !is null)
-		{
-			ast.accept(this);
-		}
+		void visit(T ast)
+	in(ast !is null)
+	{
+		ast.accept(this);
+	}
 
-	void visit(AST ast) in (ast !is null)
+	void visit(AST ast)
+	in(ast !is null)
 	{
 		static foreach (T; ASTClasses)
 			if (cast(T) ast)
@@ -182,7 +186,7 @@ abstract class StringNode : Node, IStringContainer
 	{
 		import std.array : join;
 
-		string ret = text('(', (cast(Object)this).classinfo.name, `) "`, content, '"');
+		string ret = text('(', (cast(Object) this).classinfo.name, `) "`, content, '"');
 		foreach (child; children)
 			ret ~= "\n" ~ child.to!string.indent;
 		return ret;
@@ -425,7 +429,7 @@ class StringTagContents : TagContents, IStringContainer
 	{
 		import std.array : join;
 
-		string ret = text('(', (cast(Object)this).classinfo.name, `) "`, content, '"');
+		string ret = text('(', (cast(Object) this).classinfo.name, `) "`, content, '"');
 		return ret;
 	}
 }
@@ -1142,6 +1146,7 @@ struct ASTParser
 			input.errors.expect(input, input.front.range[0],
 					"'" ~ (cast(char[])(cast(ubyte[]) stack).retro.chain.array).idup ~ "' before ')'");
 		tok.range[1] = input.front.range[0];
+		tok.content = input.code[tok.range[0] .. tok.range[1]];
 		return new Expression(tok, ret);
 	}
 
@@ -1150,7 +1155,6 @@ struct ASTParser
 		auto save = input.save;
 
 		auto tok = input.front;
-		input.popFront;
 
 		Token[] classes, ids;
 
@@ -1187,10 +1191,11 @@ struct ASTParser
 
 		Token tag;
 		bool match;
-		if (input.front.content == "." || input.front.content == "#")
+		if (tok.content == "." || tok.content == "#")
 		{
 			tag = tok;
 			tag.range[1] = tag.range[0];
+			tag.type = TokenType.identifier;
 			tag.content = "div";
 			while (parseClassOrID())
 			{
@@ -1199,6 +1204,7 @@ struct ASTParser
 		}
 		else if (tok.type == TokenType.identifier)
 		{
+			input.popFront;
 			tag = tok;
 			if (!tok.content.validateTagIdentifier)
 				input.errors.expect(input, tok.range[0], "identifier of type [-:_0-9a-zA-Z]+");
@@ -1420,7 +1426,7 @@ struct ASTParser
 	///   inclusiveEnd = true if an AST [1 .. 3] should be matched for index 3.
 	/// Returns: A path of AST nodes starting at the broadest object (Document) down to the finest object.
 	AST[] searchAST(size_t offset, bool inclusiveStart = true, bool inclusiveEnd = true)
-	out (r; r.length > 0)
+	out(r; r.length > 0)
 	{
 		AST[] ret = [root];
 
@@ -1456,4 +1462,126 @@ void skipAllWhiteGetDetent(ref DietInput input, ref bool detented)
 			TokenType.indent, TokenType.newline);
 	if (c[1])
 		detented = true;
+}
+
+private void assertToken(Token token, TokenType type, string content)
+{
+	assert(token.type == type);
+	assert(token.content == content);
+}
+
+private void assertToken(Token token, TokenType type, string content, size_t[2] range)
+{
+	assert(token.type == type);
+	assert(token.content == content);
+	assert(token.range == range);
+}
+
+unittest
+{
+	DietInput input;
+	input.file = "stdin";
+	input.code = q{doctype html
+html
+
+};
+
+	auto parser = new ASTParser;
+	parser.input = input.save;
+	parser.parseDocument();
+
+	assert(parser.input.errors.length == 0);
+
+	assert(parser.root);
+	assert(parser.root.token.range == [0, 17]);
+	assert(parser.root.children.length == 2);
+
+	auto doctype = cast(TagNode) parser.root.children[0];
+	auto html = cast(TagNode) parser.root.children[1];
+
+	assert(doctype);
+	assert(html);
+
+	doctype.tag.assertToken(TokenType.identifier, "doctype");
+	html.tag.assertToken(TokenType.identifier, "html");
+}
+
+unittest
+{
+	DietInput input;
+	input.file = "stdin";
+	input.code = `foo
+	.bar1 text1
+	.bar2 text2
+`;
+
+	auto parser = new ASTParser;
+	parser.input = input.save;
+	parser.parseDocument();
+
+	assert(parser.input.errors.length == 0);
+
+	assert(parser.root);
+	assert(parser.root.children.length == 1);
+	auto root = cast(TagNode) parser.root.children[0];
+	assert(root);
+	root.tag.assertToken(TokenType.identifier, "foo");
+	assert(root.children.length == 2);
+
+	auto bar1 = cast(TagNode) root.children[0];
+	auto bar2 = cast(TagNode) root.children[1];
+	assert(bar1);
+	assert(bar2);
+
+	bar1.tag.assertToken(TokenType.identifier, "div", [5, 5]);
+	bar2.tag.assertToken(TokenType.identifier, "div", [18, 18]);
+
+	assert(cast(TextLine) bar1.contents, "Expected string contents but got " ~ bar1.contents.to!string);
+	assert(cast(TextLine) bar2.contents, "Expected string contents but got " ~ bar2.contents.to!string);
+
+	assert((cast(TextLine) bar1.contents)._parts.length == 1);
+	assert((cast(TextLine) bar2.contents)._parts.length == 1);
+	assert((cast(TextLine) bar1.contents)._parts[0].raw == "text1");
+	assert((cast(TextLine) bar2.contents)._parts[0].raw == "text2");
+}
+
+unittest
+{
+	DietInput input;
+	input.file = "stdin";
+	input.code = `foo
+	- int item = 3;
+	p #{item.foo} bar
+`;
+
+	auto parser = new ASTParser;
+	parser.input = input.save;
+	parser.parseDocument();
+
+	assert(parser.input.errors.length == 0);
+
+	assert(parser.root);
+	assert(parser.root.children.length == 1);
+	auto root = cast(TagNode) parser.root.children[0];
+	assert(root);
+	root.tag.assertToken(TokenType.identifier, "foo");
+	assert(root.children.length == 2);
+
+	auto code = cast(DStatement) root.children[0];
+	auto paragraph = cast(TagNode) root.children[1];
+	assert(code);
+	assert(paragraph);
+
+	assert(code.content == " int item = 3;");
+	paragraph.tag.assertToken(TokenType.identifier, "p");
+
+	auto content = cast(TextLine) paragraph.contents;
+	assert(content);
+	assert(content._parts.length == 2);
+	assert(content._parts[0].inlineExpr);
+	assert(content._parts[0].inlineExpr.token.range[0] == 26);
+	assert(content._parts[0].inlineExpr.token.range[1] == 34);
+	assert(content._parts[0].inlineExpr.token.content == "item.foo");
+	assert(content._parts[0].inlineExpr.content == "item.foo");
+	assert(content._parts[1].raw == " bar");
 }

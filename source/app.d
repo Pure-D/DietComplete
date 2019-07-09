@@ -16,12 +16,9 @@ void main(string[] args)
 	DietInput input;
 	input.file = "stdin";
 	input.code = q{doctype html
-html(lang="de")
-	head
-		title Hello World
-	body
-		- foreach (index; 0 .. 10)
-			ul= i};
+html
+
+};
 
 	auto parser = new ASTParser;
 	parser.input = input.save;
@@ -49,11 +46,11 @@ html(lang="de")
 		writeln();
 	}
 
-	testComplete(24);
+	testComplete(19);
 
-	string code;
-	size_t offset;
-	complete.extractD(98, code, offset);
-	writeln("D:\n", code);
-	writeln(offset == size_t.max ? "not found" : offset.to!string);
+	// string code;
+	// size_t offset;
+	// complete.extractD(98, code, offset);
+	// writeln("D:\n", code);
+	// writeln(offset == size_t.max ? "not found" : offset.to!string);
 }
