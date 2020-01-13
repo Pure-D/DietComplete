@@ -68,19 +68,19 @@ private const(TagInfo)[] parseTagInfos(string info)
 		auto colon = attr.indexOf(":");
 		if (colon == -1)
 			throw new Exception("Malformed attribute: " ~ attr);
-		TagInfo.Attribute ret;
-		ret.name = attr[0 .. colon];
+		TagInfo.Attribute retAttr;
+		retAttr.name = attr[0 .. colon];
 		auto value = attr[colon + 1 .. $];
 		auto dot = value.indexOf('.');
 
 		if (auto exist = value in enumCompletions)
-			ret.completion = *exist;
+			retAttr.completion = *exist;
 		else if (dot != -1)
-			ret.completion = new AttributeValueByTagNameComplete(value[0 .. dot], value[dot + 1 .. $]);
+			retAttr.completion = new AttributeValueByTagNameComplete(value[0 .. dot], value[dot + 1 .. $]);
 		else
 			throw new Exception("Unknown attribute value " ~ value);
 
-		return cast(const) ret;
+		return cast(const) retAttr;
 	}
 
 	foreach (line; info.lineSplitter)
