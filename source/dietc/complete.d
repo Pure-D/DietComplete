@@ -59,8 +59,8 @@ struct TagInfo
 
 private const(TagInfo)[] parseTagInfos(string info)
 {
-	const(TagInfo)[] ret;
-	const(TagInfo.Attribute)[] attributeBase;
+	auto ret = appender!(const(TagInfo)[]);
+	auto attributeBase = appender!(TagInfo.Attribute[]);
 	CompletionSource[string] enumCompletions;
 
 	auto parseAttribute(string attr)
@@ -105,21 +105,21 @@ private const(TagInfo)[] parseTagInfos(string info)
 			if (larr == -1)
 				throw new Exception("Malformed enum line: " ~ line);
 			auto name = line[0 .. larr].stripRight;
-			auto attrs = attributeBase;
+			auto attrs = appender(attributeBase.data);
 			foreach (attr; line[larr + 1 .. $].stripLeft.splitter)
 				attrs ~= parseAttribute(attr);
-			ret ~= const TagInfo(name, attrs);
+			ret ~= const TagInfo(name, attrs.data);
 		}
 		else if (line.startsWith("tbase "))
 		{
 			line = line["tbase".length .. $].stripLeft;
-			attributeBase = null;
+			attributeBase.clear();
 			foreach (attr; line.splitter)
 				attributeBase ~= parseAttribute(attr);
 		}
 		else throw new Exception("Invalid line " ~ line);
 	}
-	return ret;
+	return ret.data;
 }
 
 __gshared const(TagInfo)[] tagInfos;
